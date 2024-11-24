@@ -1,0 +1,5 @@
+# ignora el archivo .env
+.env
+
+# ignora la carpeta node modeles
+node_modules

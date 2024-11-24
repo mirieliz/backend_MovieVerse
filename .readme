@@ -1,0 +1,7 @@
+Execute proyect:
+
+1 use command npm install 
+
+2 use .env.example as a foundation for your .env file, where you have your enviroment var
+
+3 use command npm start to run the proyect

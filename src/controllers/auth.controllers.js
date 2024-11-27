@@ -12,7 +12,7 @@ export const login= async (req,res)=>{
         //llamalo rows porque sino va a petar
         const { rows } = await pool.query( "select * from Users where email = $1",[data.email])
         if( rows.length ===0){
-            return res.json({mensaje: "credencial no encontrada"})
+            return res.json({mensaje: "credential not found"})
         }
         // else{
         //     return res.json({mensaje: "usuario encontrado"})
@@ -22,14 +22,14 @@ export const login= async (req,res)=>{
         const validatePassword = await bcrypt.compare(data.password, hashPassword)
 
         if(validatePassword===false){
-            return res.json({mensaje: "credencial invalida"})
+            return res.json({mensaje: "invalid credential "})
         }
 
         //traemos el username del usuario
         const idUser = rows[0].username
         //asignacion de JWT con los parametros username and email
         const token = jwt.sign({username:idUser,email:data.email},process.env.SECRET_TOKEN_KEY,{expiresIn: '1d'}) // payload, key ,duracion del token
-        return res.json({mensaje: 'usuario logueado',token:token})
+        return res.json({mensaje: 'user logged successfully',token:token})
 
 
 
@@ -44,14 +44,14 @@ export const register= async (req,res)=>{
     try {
         //validacion de clave de usuario
         if (data.password !== data.confPassword){
-            return res.json({mensaje: 'las claves no coinciden'})
+            return res.json({mensaje: ' passwords do not match'})
         }
         //cifrado de clave
         const passwordHash = await bcrypt.hash(data.password,10)  //numero hace referencia al numero de veces que se ejecuta la ejecucion de encriptado
         const {row} = await pool.query("insert into Users (username, email, user_password) VALUES ($1, $2, $3)",[data.username,data.email,passwordHash] ) 
         
         const token = jwt.sign({username:data.username,email:data.email},process.env.SECRET_TOKEN_KEY,{expiresIn: '1d'}) // payload, key ,duracion del token
-        return res.json({mensaje: 'usuario registrado con exito',token:token})
+        return res.json({mensaje: 'user registered successfully',token:token})
     } catch (error) {
         console.log(error)
     }

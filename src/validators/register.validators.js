@@ -1,4 +1,4 @@
-import { check, validationResult } from "express-validator";
+import { body, check, validationResult } from "express-validator";
 import validatedResults from "../helpers/validators.helpers.js";
 
 const validateUserRegister = () => {
@@ -9,6 +9,12 @@ const validateUserRegister = () => {
         check('email').isEmail().withMessage('invalid email'),              //valid email address
         check('password').exists().notEmpty().withMessage(' password required '),   //not empty field
         check('password').isLength({min:4}).withMessage('password is too short'),   //password should be at lest 4 characters
+        // body('email').custom(async value => {
+        //     const user = await UserCollection.findUserByEmail(value);
+        //     if (user) {
+        //         throw new Error('E-mail already in use');
+        //     }
+        // }),
 
         (req,res,next) => {
             validatedResults(req,res,next)

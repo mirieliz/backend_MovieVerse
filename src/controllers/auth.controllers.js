@@ -1,6 +1,8 @@
 import { pool } from "../database/connection.database.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { uploadImage } from "../helpers/cloudinary.helpers.js";
+import fs from 'fs-extra';
 
 export const login= async (req,res)=>{
     
@@ -13,6 +15,10 @@ export const login= async (req,res)=>{
         const { rows } = await pool.query( "select * from Users where email = $1",[data.email])
         if( rows.length ===0){
             return res.json({mensaje: "credential not found"})
+        }
+        const emailMatch= rows[0].email
+        if(data.email!==emailMatch){
+            return res.json({errors: "this" })
         }
         // else{
         //     return res.json({mensaje: "usuario encontrado"})
@@ -42,6 +48,14 @@ export const login= async (req,res)=>{
 export const register= async (req,res)=>{
     const data = req.body ;
     try {
+
+        //llamalo rows porque sino va a petar
+        const { rows } = await pool.query( "select * from Users where email = $1",[data.email])
+        //si el correo existe en la BD retorna el mensaje de que el email ya esta registrado
+        if( rows.length !==0){
+            return res.json({mensaje: "This email is already registered"})
+        }
+
         //validacion de clave de usuario
         if (data.password !== data.confPassword){
             return res.json({mensaje: ' passwords do not match'})

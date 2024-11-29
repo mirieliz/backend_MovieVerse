@@ -3,3 +3,6 @@
 
 # ignora la carpeta node modeles
 node_modules
+
+# tmp images 
+tmp

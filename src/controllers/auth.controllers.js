@@ -16,7 +16,7 @@ export const login= async (req,res)=>{
         if( rows.length ===0){
             return res.json({mensaje: "credential not found"})
         }
-        const emailMatch= rows[0].email
+        const emailMatch= rows[0].email             //Revisar si hace falta, (parece no ser necesaria)
         if(data.email!==emailMatch){
             return res.json({errors: "this" })
         }
@@ -35,7 +35,7 @@ export const login= async (req,res)=>{
         const idUser = rows[0].username
         //asignacion de JWT con los parametros username and email
         const token = jwt.sign({username:idUser,email:data.email},process.env.SECRET_TOKEN_KEY,{expiresIn: '1d'}) // payload, key ,duracion del token
-        return res.json({mensaje: 'user logged successfully',token:token})
+        return res.status(201).json({success: true, mensaje: 'user logged successfully',token:token})
 
 
 
@@ -50,7 +50,7 @@ export const register= async (req,res)=>{
     try {
 
         //llamalo rows porque sino va a petar
-        const { rows } = await pool.query( "select * from Users where email = $1",[data.email])
+        const { rows } = await pool.query( "select * from Users where email = $1",[data.email])     //hacer la validación al igual que el login
         //si el correo existe en la BD retorna el mensaje de que el email ya esta registrado
         if( rows.length !==0){
             return res.json({mensaje: "This email is already registered"})
@@ -65,10 +65,10 @@ export const register= async (req,res)=>{
         const {row} = await pool.query("insert into Users (username, email, user_password) VALUES ($1, $2, $3)",[data.username,data.email,passwordHash] ) 
         
         const token = jwt.sign({username:data.username,email:data.email},process.env.SECRET_TOKEN_KEY,{expiresIn: '1d'}) // payload, key ,duracion del token
-        return res.json({mensaje: 'user registered successfully',token:token})
+        return res.status(201).json({success: true, mensaje: 'user registered successfully',token:token})
     } catch (error) {
         console.log(error)
     }
     
     // res.send('register')
-}
+} 

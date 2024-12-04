@@ -7,10 +7,10 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET, // Click 'View API Keys' above to copy your API secret
 });
 
-//uplpad file (image)
+//upload file (image)
 
 export const uploadImage= async(file) =>{
     return await cloudinary.uploader.upload(file,{
         folder: 'movieverse'
-    })
+    }) 
 }

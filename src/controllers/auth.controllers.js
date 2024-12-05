@@ -56,6 +56,13 @@ export const register= async (req,res)=>{
             return res.json({mensaje: "This email is already registered"})
         }
 
+        //definimos una constante para verificar la existencia unica de un username
+        const { uniqueUser } = await pool.query( "select * from Users where username = $1",[data.username]) 
+        //si el username existe en la BD retornar mensaje de que el nombre de usuario ya existe 
+        if(uniqueUser.length !==0){
+            return res.json({mensaje: "This username already exists"})
+        }
+
         //validacion de clave de usuario
         if (data.password !== data.confPassword){
             return res.json({mensaje: ' passwords do not match'})

@@ -24,12 +24,13 @@ export const login= async (req,res)=>{
         }
 
         //traemos el username del usuario
-        const username = rows[0].username
-        //asignacion de JWT con los parametros username and email
-        const token = jwt.sign({username:username,email:data.email},process.env.SECRET_TOKEN_KEY,{expiresIn: '1d'}) // payload, key ,duracion del token
-        return res.status(201).json({success: true, mensaje: 'user logged successfully',token:token})
-
-
+        const token = jwt.sign(
+            { id: rows[0].user_id, username: rows[0].username, email: rows[0].email },
+            process.env.SECRET_TOKEN_KEY,
+            { expiresIn: '1d' }
+        );
+        
+        return res.status(201).json({ success: true, message: 'User logged in successfully', token });
 
     } catch ( error ) {
         console.log( error )
@@ -37,7 +38,7 @@ export const login= async (req,res)=>{
     // res.send('login')
 }
 
-export const register= async (req,res)=>{
+export const register= async (req,res)=>{ 
     const data = req.body ;
     try {
 
@@ -61,10 +62,19 @@ export const register= async (req,res)=>{
         }
         //cifrado de clave
         const passwordHash = await bcrypt.hash(data.password,10)  //numero hace referencia al numero de veces que se ejecuta la ejecucion de encriptado
-        const {row} = await pool.query("insert into Users (username, email, user_password) VALUES ($1, $2, $3)",[data.username,data.email,passwordHash] ) 
+        const { rows: newUser } = await pool.query(
+            "INSERT INTO Users (username, email, user_password) VALUES ($1, $2, $3) RETURNING user_id",
+            [data.username, data.email, passwordHash]
+        );
+        const idUser = newUser[0].user_id;
         
-        const token = jwt.sign({username:data.username,email:data.email},process.env.SECRET_TOKEN_KEY,{expiresIn: '1d'}) // payload, key ,duracion del token
-        return res.status(201).json({success: true, mensaje: 'user registered successfully',token:token})
+        const token = jwt.sign(
+            { user_id: idUser, username: data.username, email: data.email },
+            process.env.SECRET_TOKEN_KEY,
+            { expiresIn: '1d' }
+        );
+        return res.status(201).json({ success: true, message: 'User registered successfully', token });
+
     } catch (error) {
         console.log(error)
     }

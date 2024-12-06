@@ -1,7 +1,7 @@
 import { pool } from "../database/connection.database.js";
 import { uploadImage } from "../helpers/cloudinary.helpers.js";
 import fs from 'fs-extra';
-
+import { authenticateToken } from "../middleware/auth.middleware.js";
 export const createPost = async (req, res) => {
     const { review, rating, favorite, contains_spoilers, watch_date, tag } = req.body;
     const userId = req.user.id;
@@ -106,3 +106,155 @@ export const getRecentPosts = async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//obtener las publicaciones del usuario autenticado
+
+export const getUserPost = async (req,res) =>{
+    
+    const userId = req.user.id;
+    if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+    }
+    try {
+        const resultSearch = await pool.query( "SELECT review,rating, favorite from posts where user_id= $1",[userId])
+
+        //si el usuario no tiene publicaciones asociadas muestra 
+        if(resultSearch.rows.length === 0 ) {
+            return res.status(404).json({message: "no posts founded"})
+        }
+
+        res.status(200).json(resultSearch.rows);
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success:false,
+            message: "An error occurred while searching user posts",
+            error: error.message,
+        });
+
+    }
+};
+
+//actualizar una publicacion existente  /:userId/:movieId'
+export const userUpdatePost = async (req,res) =>{
+    // parametros necesarios para la busqueda
+    const userId = req.params;
+    const {rating,review,favorite,reaction_photo,tag, contains_spoilers,watch_Date} = req.body;
+    let reactionPhotoUrl;
+
+    try {
+        //buscamos el post existente
+        const postResult= await pool.query("SELECT * FROM POSTS WHERE post_id= $1",[userId])
+
+        //si no encuentra el post
+        if (postResult.rows.length === 0){
+            return res.status(404).json({error: "post don't found"})
+        }
+
+        const post= postResult.rows[0];
+
+        const createdAd = new Date(post.created_at);
+        const now= new Date();
+
+        //verificamos si la publicacion tiene menos de 24 horas de publicada
+
+        const timeSinceCreation= Math.abs( now - createdAd) /36e5;
+        if (timeSinceCreation > 24) {
+            return res.status(400).json({error: "you can't edit this post, it's more that 24 hours since creation!"})
+        }
+
+        //si se cambia la foto reaccion, subir a Cloudinary y obtener la nueva URL
+        if (req.files?.reaction_photo) {
+            const uploadResult= await uploadImage(req.files.reaction_photo.tempFilePath);
+            reactionPhotoUrl= uploadResult.secure_url; //URL de la imagen subida al servidor en la nube
+        }
+
+        //actualizacion del post en la base de datos
+        const updateResult = await pool.query( "UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, watch_date= $5, reaction_photo= $6, tag= $7 WHERE post_id= $8 and movieId= $9",[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, userId,movieId]);
+
+        //si no consigue la publicacion
+        if(updateResult.rows.length === 0){
+            res.status(404).json({message: "post not found"});
+        }
+        res.status(200).json(result.rows[0]);
+
+    } catch (error) {
+        console.error("Error updating post:",error);
+        res.status(500).json({ 
+            success:false,
+            message: "An error occurred while updating the post",
+            error: error.message,
+        });
+
+    }
+};
+
+//obtener los post de otros usuarios
+export const getOtherUserPost = async(req,res) => {
+    const userId = req.params;
+
+    try {
+        const result= await pool.query( "select review, rating, tag, favorite from posts where user_id =$1",[userId]);
+        
+        //si no encuentra las publicaciones
+        if (result.rows.length === 0){
+            res.status(405).json({error: "posts not founded from this user"})
+        }
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: "something where wrong while getting the user posts ",
+            error: error.message,
+        })
+    }
+}

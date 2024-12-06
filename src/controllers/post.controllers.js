@@ -104,5 +104,53 @@ export const getRecentPosts = async (req, res) => {
     }
 };
 
+export const getPostById = async (req, res) => {
+    const { postId } = req.params;
+
+    if (!postId) {
+        return res.status(400).json({ message: "postId is required" });
+    }
+
+    try {
+        const query = `
+            SELECT 
+                Posts.post_id AS post_id,
+                Posts.movie_id,
+                Posts.review,
+                Posts.rating,
+                Posts.favorite,
+                Posts.contains_spoilers,
+                Posts.watch_date,
+                Posts.reaction_photo,
+                Posts.tag,
+                Posts.created_at,
+                Users.user_id AS user_id,
+                Users.username,
+                Users.profile_picture
+            FROM Posts
+            INNER JOIN Users ON Posts.user_id = Users.user_id
+            WHERE Posts.post_id = $1;
+        `;
+
+        const values = [postId];
+        const { rows } = await pool.query(query, values);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: "Post not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            post: rows[0],
+        });
+    } catch (error) {
+        console.error("Error fetching post by ID:", error);
+        res.status(500).json({
+            success: false,
+            message: "An error occurred while fetching the post",
+            error: error.message,
+        });
+    }
+};
 
 

@@ -1,8 +1,6 @@
 import { pool } from "../database/connection.database.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { uploadImage } from "../helpers/cloudinary.helpers.js";
-import fs from 'fs-extra';
 
 export const login= async (req,res)=>{
     
@@ -11,18 +9,12 @@ export const login= async (req,res)=>{
     const data = req.body;
 
     try {
-        //llamalo rows porque sino va a petar
+        //validar si el correo esta en los registros de la base de datos
         const { rows } = await pool.query( "select * from Users where email = $1",[data.email])
         if( rows.length ===0){
             return res.json({mensaje: "credential not found"})
         }
-        const emailMatch= rows[0].email             //Revisar si hace falta, (parece no ser necesaria)
-        if(data.email!==emailMatch){
-            return res.json({errors: "this" })
-        }
-        // else{
-        //     return res.json({mensaje: "usuario encontrado"})
-        // }
+        
         const hashPassword = rows[0].user_password
         // console.log(hashPassword)
         const validatePassword = await bcrypt.compare(data.password, hashPassword)
@@ -55,6 +47,13 @@ export const register= async (req,res)=>{
         //si el correo existe en la BD retorna el mensaje de que el email ya esta registrado
         if( rows.length !==0){
             return res.json({mensaje: "This email is already registered"})
+        }
+
+        //definimos una constante para verificar la existencia unica de un username
+        const checkUsername = await pool.query( "select * from Users where username = $1",[data.username]) 
+        //si el username existe en la BD retornar mensaje de que el nombre de usuario ya existe 
+        if(checkUsername.rows.length > 0){
+            return res.json({mensaje: "This username already exists"})
         }
 
         //validacion de clave de usuario

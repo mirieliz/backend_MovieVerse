@@ -107,8 +107,8 @@ export const getRecentPosts = async (req, res) => {
 export const getPostById = async (req, res) => {
     const { postId } = req.params;
 
-    if (!postId) {
-        return res.status(400).json({ message: "postId is required" });
+    if (!postId || isNaN(parseInt(postId, 10))) {
+        return res.status(400).json({ message: "Invalid postId provided" });
     }
 
     try {
@@ -132,7 +132,7 @@ export const getPostById = async (req, res) => {
             WHERE Posts.post_id = $1;
         `;
 
-        const values = [postId];
+        const values = [parseInt(postId, 10)];
         const { rows } = await pool.query(query, values);
 
         if (rows.length === 0) {
@@ -154,3 +154,176 @@ export const getPostById = async (req, res) => {
 };
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const searchPosts = async (req, res) => {
+    try {
+        const { tag } = req.query; // Leer el parámetro de búsqueda desde los query params 
+
+        // Validar que el parámetro de búsqueda sea proporcionado y sea una cadena
+        if (!tag || typeof tag !== 'string') {
+            return res.status(400).json({ message: 'Por favor, proporciona un tag válido para la búsqueda.' });
+        }
+
+        // Consultar la base de datos para buscar posts que coincidan con el tag
+        const query = `
+            SELECT 
+                Posts.post_id AS post_id,
+                Posts.movie_id,
+                Posts.review,
+                Posts.rating,
+                Posts.favorite,
+                Posts.contains_spoilers,
+                Posts.watch_date,
+                Posts.reaction_photo,
+                Posts.tag,
+                Posts.created_at,
+                Users.user_id AS user_id,
+                Users.username,
+                Users.profile_picture
+            FROM Posts
+            INNER JOIN Users ON Posts.user_id = Users.user_id
+            WHERE EXISTS (
+                SELECT 1 
+                FROM unnest(string_to_array(Posts.tag, ',')) AS single_tag
+                WHERE single_tag ILIKE $1
+            )
+            ORDER BY Posts.created_at DESC;
+        `;
+
+        // Ejecutar la consulta con el parámetro del tag
+        const { rows: posts } = await pool.query(query, [tag]);
+
+        // Verificar si hay resultados
+        if (posts.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron posts con el tag proporcionado.' });
+        }
+
+        // Devolver los resultados
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error('Error en la búsqueda de posts:', error);
+        res.status(500).json({ message: 'Error al buscar posts.', error: error.message });
+    }
+};

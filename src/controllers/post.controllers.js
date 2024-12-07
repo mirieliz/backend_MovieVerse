@@ -279,12 +279,21 @@ export const getPostById = async (req, res) => {
 
 export const searchPosts = async (req, res) => {
     try {
-        const { tag } = req.query; // Leer el parámetro de búsqueda desde los query params 
+        let { tag } = req.query;
 
         // Validar que el parámetro de búsqueda sea proporcionado y sea una cadena
         if (!tag || typeof tag !== 'string') {
             return res.status(400).json({ message: 'Por favor, proporciona un tag válido para la búsqueda.' });
         }
+
+        // Eliminar espacios adicionales del tag
+        tag = tag.trim();
+
+        // Obtener los parámetros de paginación de la solicitud (por defecto, página 1, 20 posts por página)
+        const { page = 1, limit = 20 } = req.query;
+
+        // Calcular el offset para la paginación
+        const offset = (page - 1) * limit;
 
         // Consultar la base de datos para buscar posts que coincidan con el tag
         const query = `

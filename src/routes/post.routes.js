@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPost, getRecentPosts} from "../controllers/post.controllers.js";
+import { createPost, getRecentPosts, getPostById} from "../controllers/post.controllers.js";
 import validatePost from "../validators/createPost.validators.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 
@@ -9,6 +9,8 @@ const router = Router();
 router.post('/posts', authenticateToken, createPost);
 
 router.get('/posts/recent', authenticateToken, getRecentPosts);
+
+router.get('/posts/:postId', authenticateToken, getPostById);
 
 
 export default router; 

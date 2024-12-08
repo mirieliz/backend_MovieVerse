@@ -3,6 +3,7 @@ import { serverConfig } from './config/server.config.js';
 // import { pool } from './database/connection.database.js';
 import authRoute from './routes/auth.routes.js';
 import createPost from './routes/post.routes.js';
+import addFavorite  from './routes/user.routes.js';
 import cors from 'cors';
 import filegestor from 'express-fileupload';
 
@@ -20,6 +21,7 @@ app.use(filegestor({
 //everything you need put down 
 app.use(authRoute);
 app.use(createPost);
+app.use(addFavorite)
 //prueba de conexion 
 app.get('/ping',(req,res)=>{
     return res.status(200).json({mensaje: 'pong'})

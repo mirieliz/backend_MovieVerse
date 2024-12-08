@@ -3,7 +3,7 @@ import { uploadImage } from "../helpers/cloudinary.helpers.js";
 import fs from 'fs-extra';
 
 export const createPost = async (req, res) => {
-    const { review, rating, favorite, contains_spoilers, watch_date, tag } = req.body;
+    const { review, rating, contains_spoilers, watch_date, tag } = req.body;
     const userId = req.user.id;
     if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -26,15 +26,14 @@ export const createPost = async (req, res) => {
 
         // Insertar los datos del post en la base de datos
         const query = `
-            INSERT INTO Posts (user_id, movie_id, review, rating, favorite, contains_spoilers, watch_date, reaction_photo, created_at, tag)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9)
+            INSERT INTO Posts (user_id, movie_id, review, rating, contains_spoilers, watch_date, reaction_photo, created_at, tag)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
             RETURNING *`; 
         const values = [
             userId,
             movieId, 
             review,  
             rating,
-            favorite || false,
             contains_spoilers || false,
             watch_date || null, 
             reactionPhotoUrl, 
@@ -71,7 +70,6 @@ export const getRecentPosts = async (req, res) => {
                 Posts.movie_id,
                 Posts.review,
                 Posts.rating,
-                Posts.favorite,
                 Posts.contains_spoilers,
                 Posts.watch_date,
                 Posts.reaction_photo,
@@ -118,7 +116,6 @@ export const getPostById = async (req, res) => {
                 Posts.movie_id,
                 Posts.review,
                 Posts.rating,
-                Posts.favorite,
                 Posts.contains_spoilers,
                 Posts.watch_date,
                 Posts.reaction_photo,
@@ -302,7 +299,6 @@ export const searchPosts = async (req, res) => {
                 Posts.movie_id,
                 Posts.review,
                 Posts.rating,
-                Posts.favorite,
                 Posts.contains_spoilers,
                 Posts.watch_date,
                 Posts.reaction_photo,

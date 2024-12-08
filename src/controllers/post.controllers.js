@@ -150,12 +150,12 @@ export const getPostById = async (req, res) => {
     }
 };
 
-//actualizar una publicacion existente  /:userId/:movieId'
+//actualizar una publicacion existente  
 export const updatePost = async (req,res) =>{
     // parametros necesarios para la busqueda
-    const userId = req.params;
-    const postId= req.params;
-    const {rating,review,favorite,reaction_photo,tag, contains_spoilers,watch_Date} = req.body;
+    const userId = req.params;      //lo obtenemos del JWT
+    const postId= req.params;       //como lo obtengo???
+    const {rating,review,favorite,reaction_photo,tag, contains_spoilers,watch_Date,updated_At} = req.body;
     let reactionPhotoUrl;
 
     try {
@@ -167,14 +167,13 @@ export const updatePost = async (req,res) =>{
             return res.status(404).json({error: "post don't found"})
         }
 
-
         const post= postResult.rows[0];
 
+        //verificamos si la publicacion tiene menos de 24 horas de publicada
         const createdAd = new Date(post.created_at);
         const now= new Date();
 
-        //verificamos si la publicacion tiene menos de 24 horas de publicada
-
+        
         const timeSinceCreation= Math.abs( now - createdAd) /(100 * 60 * 60); //diferencia en horas
         if (timeSinceCreation > 24) {
             return res.status(400).json({error: "you can't edit this post, it's more that 24 hours since creation!"})
@@ -187,13 +186,16 @@ export const updatePost = async (req,res) =>{
         }
 
         //actualizacion del post en la base de datos
-        const updateResult = await pool.query( "UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, watch_date= $5, reaction_photo= $6, tag= $7 WHERE post_id= $8 and movieId= $9",[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, userId,movieId]);
+        const updatedPost = await pool.query( "UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, watch_date= $5, reaction_photo= $6, tag= $7, updated_at = current_timestamp WHERE post_id= $8 ",[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, updated_At,postId]);
 
         //si no consigue la publicacion
-        if(updateResult.rows.length === 0){
+        if(updatedPost.rows.length === 0){
             res.status(404).json({message: "post not found"});
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json({
+            message: 'post updated successfully',
+            post:updatedPost.rows[0],
+        });
 
     } catch (error) {
         console.error("Error updating post:",error);

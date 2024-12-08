@@ -65,8 +65,8 @@ export const searchUsers = async (req, res) => {
         // Realiza la consulta a la base de datos
         const result = await pool.query(
             `SELECT user_id, username, email
-             FROM users
-             WHERE username ILIKE $1 OR email ILIKE $1;`,
+            FROM users
+            WHERE username ILIKE $1 OR email ILIKE $1;`,
             [searchQuery]
         );
 

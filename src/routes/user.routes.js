@@ -12,7 +12,7 @@ router.post('/users/me/favorites', authenticateToken, addFavorite);
 router.delete('/users/me/favorites/:movie_id', authenticateToken, removeFavorite);
 
 //this endpoint had validations
-router.get('/users/me/posts',validatePost(), getUserPostMyPosts );
+router.get('/users/me/posts',authenticateToken,validatePost(), getUserPostMyPosts );
 
 router.get('/users/:userId/posts', getOtherUserPost);
 

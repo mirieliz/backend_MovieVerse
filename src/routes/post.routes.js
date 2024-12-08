@@ -15,7 +15,7 @@ router.get('/posts/search', authenticateToken, searchPosts);
 router.get('/posts/:postId', authenticateToken, getPostById);
 
 
-router.put('/posts/:postId',updatePost);
+router.put('/posts/:postId',authenticateToken,updatePost);
 
 
 export default router; 

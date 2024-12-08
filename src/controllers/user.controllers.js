@@ -51,6 +51,7 @@ export const removeFavorite = async (req, res) => {
     }
 };
 
+//buscar usuario por username o email
 export const searchUsers = async (req, res) => {
     try {
         // Obtén el parámetro de búsqueda desde la consulta (query string)
@@ -72,17 +73,18 @@ export const searchUsers = async (req, res) => {
 
         // Responde con los usuarios encontrados
         res.status(200).json(result.rows);
-    } catch (error) {
-        console.error('Error al buscar usuarios:', error);
-        res.status(500).json({ message: 'Error interno del servidor.' });
-    }
+        } catch (error) {
+            console.error('Error searching user:', error);
+            res.status(500).json({ message: 'failed on searching users try again ' });
+        }
 };
 
 
 
 //obtener las publicaciones del usuario autenticado
 export const getUserPostMyPosts = async(req,res) => {
-    const { userId } = req.params; 
+    const { userId } = req.user.id; //id de usuario extraido del jwt
+
     if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
     }
@@ -107,19 +109,28 @@ export const getUserPostMyPosts = async(req,res) => {
 
 //obtener los post de otros usuarios
 
-//EN PROCESO, NO ESTA LISTO
+//PROBAR
 export const getOtherUserPost = async(req,res) => {
-    const userId = req.params;
+    const { userId }= req.params; 
 
     try {
-        const result= await pool.query( "select review, rating, tag, favorite from posts where user_id =$1",[userId]);
+
+        const searchUser = await pool.query("select * from users where user_id =$1",[userId]);
+
+        //verificamos que el usuario exista
+        if(searchUser.rows.length === 0){
+            return res.status(400).json({error: 'user not founded'});
+        }
+
+        //obtener los post del usuario
+        const postsResult= await pool.query( "select posts.review, posts.rating, posts.tag, posts.favorite from posts where posts.user_id =$1",[userId]);
 
         //si no encuentra las publicaciones
-        if (result.rows.length === 0){
+        if (postsResult.rows.length === 0){
             res.status(405).json({error: "posts not founded from this user"})
         }
 
-        res.status(200).json(result.rows);
+        res.status(200).json(postsResult.rows);
     } catch (error) {
         console.log(error);
         res.status(500).json({
@@ -162,4 +173,22 @@ export const getFavoriteMovies = async (req, res) => {
     }
   };
   
-  
+export const changePassword = async(res,req) => {
+    
+    const userId = req.params;
+
+    const {currentPassword, newPassword, confirmNewPassword} = req.body;
+
+    //si no se proporcionan los valores
+    if( !currentPassword || !newPassword || !confirmNewPassword){
+        return res.json({message: 'this values are required'})
+    }
+
+
+
+    try {
+        
+    } catch (error) {
+        
+    }
+}

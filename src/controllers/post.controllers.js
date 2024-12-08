@@ -151,7 +151,7 @@ export const getPostById = async (req, res) => {
 };
 
 //actualizar una publicacion existente  /:userId/:movieId'
-export const userUpdatePost = async (req,res) =>{
+export const updatePost = async (req,res) =>{
     // parametros necesarios para la busqueda
     const userId = req.params;
     const postId= req.params;
@@ -206,30 +206,7 @@ export const userUpdatePost = async (req,res) =>{
     }
 };
 
-//obtener los post de otros usuarios
 
-//EN PROCESO, NO ESTA LISTO
-export const getOtherUserPost = async(req,res) => {
-    const userId = req.params;
-
-    try {
-        const result= await pool.query( "select review, rating, tag, favorite from posts where user_id =$1",[userId]);
-
-        //si no encuentra las publicaciones
-        if (result.rows.length === 0){
-            res.status(405).json({error: "posts not founded from this user"})
-        }
-
-        res.status(200).json(result.rows);
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            success: false,
-            message: "something where wrong while getting the user posts ",
-            error: error.message,
-        })
-    }
-}
 
 
 

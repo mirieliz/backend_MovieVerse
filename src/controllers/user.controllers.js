@@ -104,3 +104,28 @@ export const getUserPostMyPosts = async(req,res) => {
         });
     }
 };
+
+//obtener los post de otros usuarios
+
+//EN PROCESO, NO ESTA LISTO
+export const getOtherUserPost = async(req,res) => {
+    const userId = req.params;
+
+    try {
+        const result= await pool.query( "select review, rating, tag, favorite from posts where user_id =$1",[userId]);
+
+        //si no encuentra las publicaciones
+        if (result.rows.length === 0){
+            res.status(405).json({error: "posts not founded from this user"})
+        }
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: "something where wrong while getting the user posts ",
+            error: error.message,
+        })
+    }
+}

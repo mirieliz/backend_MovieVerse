@@ -173,22 +173,3 @@ export const getFavoriteMovies = async (req, res) => {
     }
   };
   
-export const changePassword = async(res,req) => {
-    
-    const userId = req.params;
-
-    const {currentPassword, newPassword, confirmNewPassword} = req.body;
-
-    //si no se proporcionan los valores
-    if( !currentPassword || !newPassword || !confirmNewPassword){
-        return res.json({message: 'this values are required'})
-    }
-
-
-
-    try {
-        
-    } catch (error) {
-        
-    }
-}

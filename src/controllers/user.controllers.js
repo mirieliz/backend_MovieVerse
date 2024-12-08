@@ -172,7 +172,7 @@ export const getFavoriteMovies = async (req, res) => {
       res.status(500).json({ error: 'Error fetching favorite movies.' });
     }
   };
-  
+    // Cambio de password 
 export const changePassword = async(res,req) => {
     
     const userId = req.params;
@@ -191,4 +191,5 @@ export const changePassword = async(res,req) => {
     } catch (error) {
         
     }
+  
 }

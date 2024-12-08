@@ -18,4 +18,6 @@ router.get('/posts/:postId', authenticateToken, getPostById);
 router.put('/posts/:postId',authenticateToken,updatePost);
 
 
+
+
 export default router; 

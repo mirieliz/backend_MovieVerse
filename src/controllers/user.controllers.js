@@ -129,3 +129,37 @@ export const getOtherUserPost = async(req,res) => {
         })
     }
 }
+
+export const getFavoriteMovies = async (req, res) => {
+    try {
+      const userId = req.user.id; // ID del usuario autenticado
+      const { page = 1, limit = 20 } = req.query; // Página y límite desde el query string
+  
+      const offset = (page - 1) * limit; // Calcular el offset para la paginación
+  
+      // Consulta a la base de datos con paginación
+      const favoriteMovies = await pool.query(
+        `SELECT movie_id
+         FROM favorites
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, limit, offset]
+      );
+  
+      // Extraer los IDs de las películas
+      const movieIds = favoriteMovies.rows.map(fav => fav.movie_id);
+  
+      res.status(200).json({
+        page: Number(page),
+        limit: Number(limit),
+        total: movieIds.length,
+        data: movieIds,
+      });
+    } catch (error) {
+      console.error('Error fetching favorite movies:', error.message);
+      res.status(500).json({ error: 'Error fetching favorite movies.' });
+    }
+  };
+  
+  

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addFavorite, removeFavorite, searchUsers, getUserPostMyPosts ,getOtherUserPost} from "../controllers/user.controllers.js";
+import { addFavorite, removeFavorite, searchUsers, getUserPostMyPosts ,getOtherUserPost, getFavoriteMovies} from "../controllers/user.controllers.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 import validatePost from "../validators/createPost.validators.js";
 
@@ -15,5 +15,7 @@ router.delete('/users/me/favorites/:movie_id', authenticateToken, removeFavorite
 router.get('/users/me/posts',authenticateToken,validatePost(), getUserPostMyPosts );
 
 router.get('/users/:userId/posts', getOtherUserPost);
+
+router.get('/users/me/favorite-movies', authenticateToken, getFavoriteMovies);
 
 export default router;

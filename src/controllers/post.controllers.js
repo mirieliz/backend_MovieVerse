@@ -208,7 +208,102 @@ export const updatePost = async (req,res) =>{
     }
 };
 
+//eliminar un post del usuario que no tenga mas de 24
+export const deletePost = async(req,res) =>{
+    const userId = req.user.id;
+    const {postId}= req.params;
 
+    try {
+
+        //buscamos el post existente
+        const postResult= await pool.query("select * from posts where post_id=$1 and user_id=$2",[postId,userId])
+
+        //si no encuentra el post
+        if (postResult.rows.length === 0){
+            return res.status(404).json({error: "post don't found"})
+        }
+
+        const post = postResult.rows[0];
+        const movieId = post.movie_id;
+
+        //eliminar el post
+        const deletePost = await pool.query("delete from posts where post_id=$1 and posts.user_id=$2",[postId,userId
+        ]);
+        
+        //verificar si no esta marcada como favorita
+        const checkFavorite = await pool.query("select * from favorites where user_id=$1 and movie_id=$2",[userId,movieId])
+
+        if(checkFavorite.rows.length > 0) {
+            deleteFavorite= await pool.query("delete from favorites where user_id= $1 and movie_id= $2")
+        }
+
+        res.status(200).json({message:'post deleted susuccessfully'});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success:false,
+            message: 'An error occurred while deleting the post'
+        })
+    }
+};
+
+//crear comentario en un post
+export const createComment = async(req,res) =>{
+    const userId = req.params;
+    const postId = req.params;
+    const {user_comment} = req.body;
+
+    if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    if(!postId){
+        return res.status(400).json({message: 'post id required'});
+    }
+
+    try {
+        const comment= await pool.query("insert into comments values post_id=$1 , user_id=$2 , user_comment=$3, created_at = now();",[postId,userId,user_comment]);
+
+        if(comment.rows.length === 0) {
+            return res.json({message: "something was wrong creating your comment"})
+        }
+        res.status(200).json({message: "comment created successfully"});
+        
+    } catch (error) {
+        console.log(error);
+        res.status(200).json({
+            success:false,
+            message: "something happened while created you comment",
+            error: error.message,
+        })
+    }
+
+};
+
+//traer todos los comentarios de un post
+export const getPostComments = async(req,res) => {
+    const postId = req.params;
+
+    try {
+        
+        //consulta para obtener los comentarios asociados al post ademas del username y avatar de los usuarios que comentaron
+        const commentsResult= await pool.query("select c.comment_id ,c.user_comment , c.created_at, u.profile_picture, u.username from comments c join users u on c.user_id = u.user_id where c.post_id =$1",[postId]);
+
+        //si no consigue los comentarios
+        if(commentsResult.rows.length === 0) {
+            return res.status(401).json({message: 'no comments founded for this post'})
+        }
+        res.status(200).json({message: "comments founded"})
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success:false,
+            message: "something was wrong searching the post comments",
+            error: error.message,
+        })
+    }
+};
 
 
 

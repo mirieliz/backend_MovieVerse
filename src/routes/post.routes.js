@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPost, getRecentPosts, getPostById, searchPosts} from "../controllers/post.controllers.js";
+import { createPost, getRecentPosts, getPostById, searchPosts, getUserPostMyPosts, userUpdatePost, getOtherUserPost} from "../controllers/post.controllers.js";
 import validatePost from "../validators/createPost.validators.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 
@@ -14,4 +14,10 @@ router.get('/posts/search', authenticateToken, searchPosts);
 
 router.get('/posts/:postId', authenticateToken, getPostById);
 
+//this endpoint had validations
+router.get('/users/me/posts',validatePost(), getUserPostMyPosts );
+
+router.put('/posts/:postId',userUpdatePost);
+
+router.get('/users/:userId/posts', getOtherUserPost);
 export default router; 

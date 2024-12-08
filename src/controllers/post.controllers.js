@@ -1,7 +1,7 @@
 import { pool } from "../database/connection.database.js";
 import { uploadImage } from "../helpers/cloudinary.helpers.js";
 import fs from 'fs-extra';
-
+import { authenticateToken } from "../middleware/auth.middleware.js";
 export const createPost = async (req, res) => {
     const { review, rating, favorite, contains_spoilers, watch_date, tag } = req.body;
     const userId = req.user.id;

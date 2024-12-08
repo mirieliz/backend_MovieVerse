@@ -203,15 +203,15 @@ export const getPostById = async (req, res) => {
 
 //obtener las publicaciones del usuario autenticado
 
-export const getUserPost = async (req,res) =>{
+export const getUserPostMyPost = async (req,res) =>{
     
     const userId = req.user.id;
     if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
     }
     try {
-        const resultSearch = await pool.query( "SELECT review,rating, favorite from posts where user_id= $1",[userId])
-
+        const resultSearch = await pool.query( "select users.user_id as user_id,users.profile_picture, users.username, posts.post_id as post_id,posts.movie_id, posts.review,posts.rating, posts.favorite posts.contains_spoilers, posts.watch_date, posts.reaction_photo, posts.tag,posts.created_at from posts inner join posts on users.user_id = post.user_id where user_id= $1",[userId])
+        
         //si el usuario no tiene publicaciones asociadas muestra 
         if(resultSearch.rows.length === 0 ) {
             return res.status(404).json({message: "no posts founded"})
@@ -234,12 +234,13 @@ export const getUserPost = async (req,res) =>{
 export const userUpdatePost = async (req,res) =>{
     // parametros necesarios para la busqueda
     const userId = req.params;
+    const {postId} = req.params;
     const {rating,review,favorite,reaction_photo,tag, contains_spoilers,watch_Date} = req.body;
     let reactionPhotoUrl;
 
     try {
         //buscamos el post existente
-        const postResult= await pool.query("SELECT * FROM POSTS WHERE post_id= $1",[userId])
+        const postResult= await pool.query("select * from posts where user_id=$1 and post_id=$2",[userId,postId])
 
         //si no encuentra el post
         if (postResult.rows.length === 0){
@@ -253,7 +254,7 @@ export const userUpdatePost = async (req,res) =>{
 
         //verificamos si la publicacion tiene menos de 24 horas de publicada
 
-        const timeSinceCreation= Math.abs( now - createdAd) /36e5;
+        const timeSinceCreation= Math.abs( now - createdAd) /(1000 * 60 * 60);
         if (timeSinceCreation > 24) {
             return res.status(400).json({error: "you can't edit this post, it's more that 24 hours since creation!"})
         }
@@ -265,7 +266,7 @@ export const userUpdatePost = async (req,res) =>{
         }
 
         //actualizacion del post en la base de datos
-        const updateResult = await pool.query( "UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, watch_date= $5, reaction_photo= $6, tag= $7 WHERE post_id= $8 and movieId= $9",[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, userId,movieId]);
+        const updateResult = await pool.query( "UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, reaction_photo= $6, tag= $7 WHERE post_id= $8 and user_id= $9",[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, postId,userId]);
 
         //si no consigue la publicacion
         if(updateResult.rows.length === 0){
@@ -289,7 +290,7 @@ export const getOtherUserPost = async(req,res) => {
     const userId = req.params;
 
     try {
-        const result= await pool.query( "select review, rating, tag, favorite from posts where user_id =$1",[userId]);
+        const result= await pool.query( "select posts.review, posts.rating, posts.tag, posts.favorite, posts.reaction_ from posts where user_id =$1",[userId]);
         
         //si no encuentra las publicaciones
         if (result.rows.length === 0){

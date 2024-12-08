@@ -14,8 +14,6 @@ router.get('/posts/search', authenticateToken, searchPosts);
 
 router.get('/posts/:postId', authenticateToken, getPostById);
 
-//this endpoint had validations
-router.get('/users/me/posts',validatePost(), getUserPostMyPosts );
 
 router.put('/posts/:postId',userUpdatePost);
 

@@ -77,3 +77,30 @@ export const searchUsers = async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor.' });
     }
 };
+
+
+
+//obtener las publicaciones del usuario autenticado
+export const getUserPostMyPosts = async(req,res) => {
+    const { userId } = req.params; 
+    if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+    }
+    try { 
+        // Consulta para obtener todas las publicaciones del usuario 
+        const resultSearch = await pool.query('select posts.post_id as post_id, posts.movie_id, posts.review, posts.rating, posts.favorite,posts.contains_spoilers, posts.watch_date, posts.reaction_photo, posts.tag, users.user_id as user_id, users.username, users.profile_picture from inner join users on posts.user_id = users.user_id where posts.userId = $1', [userId]);
+        
+        //si no se consiguen los post del usuario
+        if (resultSearch.rows.length === 0) { 
+            return res.status(404).json({ error: 'no posts founded' });
+        } 
+        res.status(200).json(resultSearch.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success:false,
+            message: "An error occurred while searching user posts",
+            error: error.message,
+        });
+    }
+};

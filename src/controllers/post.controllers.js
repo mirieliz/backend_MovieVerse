@@ -1,9 +1,9 @@
 import { pool } from "../database/connection.database.js";
 import { uploadImage } from "../helpers/cloudinary.helpers.js";
 import fs from 'fs-extra';
-
+import { authenticateToken } from "../middleware/auth.middleware.js";
 export const createPost = async (req, res) => {
-    const { review, rating, favorite, contains_spoilers, watch_date, tag } = req.body;
+    const { review, rating, contains_spoilers, watch_date, tag } = req.body;
     const userId = req.user.id;
     if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -26,15 +26,14 @@ export const createPost = async (req, res) => {
 
         // Insertar los datos del post en la base de datos
         const query = `
-            INSERT INTO Posts (user_id, movie_id, review, rating, favorite, contains_spoilers, watch_date, reaction_photo, created_at, tag)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9)
+            INSERT INTO Posts (user_id, movie_id, review, rating, contains_spoilers, watch_date, reaction_photo, created_at, tag)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
             RETURNING *`; 
         const values = [
             userId,
             movieId, 
             review,  
             rating,
-            favorite || false,
             contains_spoilers || false,
             watch_date || null, 
             reactionPhotoUrl, 
@@ -71,7 +70,6 @@ export const getRecentPosts = async (req, res) => {
                 Posts.movie_id,
                 Posts.review,
                 Posts.rating,
-                Posts.favorite,
                 Posts.contains_spoilers,
                 Posts.watch_date,
                 Posts.reaction_photo,
@@ -118,7 +116,6 @@ export const getPostById = async (req, res) => {
                 Posts.movie_id,
                 Posts.review,
                 Posts.rating,
-                Posts.favorite,
                 Posts.contains_spoilers,
                 Posts.watch_date,
                 Posts.reaction_photo,
@@ -153,7 +150,61 @@ export const getPostById = async (req, res) => {
     }
 };
 
+//actualizar una publicacion existente  /:userId/:movieId'
+export const updatePost = async (req,res) =>{
+    // parametros necesarios para la busqueda
+    const userId = req.params;
+    const postId= req.params;
+    const {rating,review,favorite,reaction_photo,tag, contains_spoilers,watch_Date} = req.body;
+    let reactionPhotoUrl;
 
+    try {
+        //buscamos el post existente
+        const postResult= await pool.query("select * from posts where post_id=$1 and user_id=$2",[postId,userId])
+
+        //si no encuentra el post
+        if (postResult.rows.length === 0){
+            return res.status(404).json({error: "post don't found"})
+        }
+
+
+        const post= postResult.rows[0];
+
+        const createdAd = new Date(post.created_at);
+        const now= new Date();
+
+        //verificamos si la publicacion tiene menos de 24 horas de publicada
+
+        const timeSinceCreation= Math.abs( now - createdAd) /(100 * 60 * 60); //diferencia en horas
+        if (timeSinceCreation > 24) {
+            return res.status(400).json({error: "you can't edit this post, it's more that 24 hours since creation!"})
+        }
+
+        //si se cambia la foto reaccion, subir a Cloudinary y obtener la nueva URL
+        if (req.files?.reaction_photo) {
+            const uploadResult= await uploadImage(req.files.reaction_photo.tempFilePath);
+            reactionPhotoUrl= uploadResult.secure_url; //URL de la imagen subida al servidor en la nube
+        }
+
+        //actualizacion del post en la base de datos
+        const updateResult = await pool.query( "UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, watch_date= $5, reaction_photo= $6, tag= $7 WHERE post_id= $8 and movieId= $9",[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, userId,movieId]);
+
+        //si no consigue la publicacion
+        if(updateResult.rows.length === 0){
+            res.status(404).json({message: "post not found"});
+        }
+        res.status(200).json(result.rows[0]);
+
+    } catch (error) {
+        console.error("Error updating post:",error);
+        res.status(500).json({ 
+            success:false,
+            message: "An error occurred while updating the post",
+            error: error.message,
+        });
+
+    }
+};
 
 
 
@@ -302,7 +353,6 @@ export const searchPosts = async (req, res) => {
                 Posts.movie_id,
                 Posts.review,
                 Posts.rating,
-                Posts.favorite,
                 Posts.contains_spoilers,
                 Posts.watch_date,
                 Posts.reaction_photo,

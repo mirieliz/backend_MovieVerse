@@ -20,9 +20,9 @@ router.put('/posts/:postId',authenticateToken,updatePost);
 
 router.delete('/post/:postId',authenticateToken,deletePost);
 
-router.post('/posts/:postId/comment',validateComment(),createComment);
+router.post("/posts/:postId/comment",authenticateToken,validateComment(),createComment);
 
-router.get('/posts/:postId/comments',getPostComments);
+router.get('/posts/:postId/comments',authenticateToken,getPostComments);
 
 router.get('/users/me/liked-posts', authenticateToken, like_posts);
 

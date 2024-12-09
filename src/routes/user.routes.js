@@ -2,6 +2,7 @@ import { Router } from "express";
 import { addFavorite, removeFavorite, searchUsers, getUserPostMyPosts ,getOtherUserPost, getFavoriteMovies, changePassword} from "../controllers/user.controllers.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 import validatePost from "../validators/createPost.validators.js";
+import validatePassword from "../validators/password.validator.js";
 
 
 const router = Router();
@@ -20,6 +21,6 @@ router.get('/users/:userId/posts', authenticateToken ,getOtherUserPost);
 router.get('/users/me/favorite-movies', authenticateToken, getFavoriteMovies);
 
 //Cambio de contraseña
-router.put('/users/me/password', authenticateToken, changePassword);
+router.put('/users/me/password', authenticateToken, validatePassword(), changePassword);
 
 export default router;

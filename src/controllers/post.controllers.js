@@ -205,7 +205,27 @@ export const updatePost = async (req,res) =>{
             error: error.message,
         });
 
+      
+
     }
+
+};
+     //  /users/me/liked-posts
+export const like_posts = async(req,res) =>{
+    const posts = await post.findAll({
+    where: {
+      user_id: userId,
+      deletedAt: null
+    },
+    include: [
+      {
+        model: User,
+        attributes: ['user_id', 'username']
+      }
+    ],
+    order: [['updatedAt', 'DESC']]
+  });
+
 };
 
 //eliminar un post del usuario que no tenga mas de 24

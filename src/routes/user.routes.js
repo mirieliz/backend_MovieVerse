@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { addFavorite, removeFavorite, searchUsers, getUserPostMyPosts ,getOtherUserPost, getFavoriteMovies} from "../controllers/user.controllers.js";
+import { addFavorite, removeFavorite, searchUsers, getUserPostMyPosts ,getOtherUserPost, getFavoriteMovies, changePassword} from "../controllers/user.controllers.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 import validatePost from "../validators/createPost.validators.js";
+import validatePassword from "../validators/password.validator.js";
+
 
 const router = Router();
 
@@ -12,10 +14,13 @@ router.post('/users/me/favorites', authenticateToken, addFavorite);
 router.delete('/users/me/favorites/:movie_id', authenticateToken, removeFavorite);
 
 //this endpoint had validations
-router.get('/users/me/posts',authenticateToken,validatePost(), getUserPostMyPosts );
+router.get('/users/me/posts', getUserPostMyPosts );
 
 router.get('/users/:userId/posts', authenticateToken ,getOtherUserPost);
 
 router.get('/users/me/favorite-movies', authenticateToken, getFavoriteMovies);
+
+//Cambio de contraseña
+router.put('/users/me/password', authenticateToken, validatePassword(), changePassword);
 
 export default router;

@@ -205,7 +205,27 @@ export const updatePost = async (req,res) =>{
             error: error.message,
         });
 
+      
+
     }
+
+};
+     //  /users/me/liked-posts
+export const like_posts = async(req,res) =>{
+    const posts = await post.findAll({
+    where: {
+      user_id: userId,
+      deletedAt: null
+    },
+    include: [
+      {
+        model: User,
+        attributes: ['user_id', 'username']
+      }
+    ],
+    order: [['updatedAt', 'DESC']]
+  });
+
 };
 
 //eliminar un post del usuario que no tenga mas de 24
@@ -249,25 +269,43 @@ export const deletePost = async(req,res) =>{
 
 //crear comentario en un post
 export const createComment = async(req,res) =>{
-    const userId = req.params;
-    const postId = req.params;
-    const {user_comment} = req.body;
+    const  userId  = req.params;
+    const   postId   = req.params.postId;
+    const { comment } = req.body;
 
     if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
     }
 
-    if(!postId){
-        return res.status(400).json({message: 'post id required'});
+    if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid postId provided" });
     }
 
-    try {
-        const comment= await pool.query("insert into comments values post_id=$1 , user_id=$2 , user_comment=$3, created_at = now();",[postId,userId,user_comment]);
+    // if(!postId){
+    //     return res.status(400).json({message: 'post id required'});
+    // }
 
-        if(comment.rows.length === 0) {
+    try {
+
+        const postCheck = await pool.query(`select * from posts where post_id= $1`,[parseInt(postId, 10)]);
+        if(postCheck.rows.length === 0){
+            return res.status(404).json({message: "post not found"});
+        }
+        //sentencia para insertar el comentario
+        // const query = ` INSERT INTO Comments (post_id, user_id, user_comment, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *`;
+        // const values = [postId, userId, comment];
+        // const { rows } = await pool.query(query, values);
+
+        const commentAdd= await pool.query("insert into comments values post_id=$1 , user_id=$2 , user_comment=$3, created_at = now() returning *;",[parseInt(postId, 10),userId,comment]);
+
+        if(commentAdd.rows.length === 0) {
             return res.json({message: "something was wrong creating your comment"})
         }
-        res.status(200).json({message: "comment created successfully"});
+        res.status(201).json({
+            success: true,
+            message: "comment added successfully",
+            comment: rows[0]
+        });
         
     } catch (error) {
         console.log(error);

@@ -211,22 +211,22 @@ export const updatePost = async (req,res) =>{
 
 };
      //  /users/me/liked-posts
-export const like_posts = async(req,res) =>{
-    const posts = await post.findAll({
-    where: {
-      user_id: userId,
-      deletedAt: null
-    },
-    include: [
-      {
-        model: User,
-        attributes: ['user_id', 'username']
-      }
-    ],
-    order: [['updatedAt', 'DESC']]
-  });
+// export const like_posts = async(req,res) =>{
+//     const posts = await post.findAll({
+//     where: {
+//       user_id: userId,
+//       deletedAt: null
+//     },
+//     include: [
+//       {
+//         model: User,
+//         attributes: ['user_id', 'username']
+//       }
+//     ],
+//     order: [['updatedAt', 'DESC']]
+//   });
 
-};
+// };
 
 //eliminar un post del usuario que no tenga mas de 24
 export const deletePost = async(req,res) =>{
@@ -269,8 +269,8 @@ export const deletePost = async(req,res) =>{
 
 //crear comentario en un post
 export const createComment = async(req,res) =>{
-    const  userId  = req.params;
-    const   postId   = req.params.postId;
+    const  userId  = req.user.id; //obtener user id desde el jwt
+    const   postId   = parseInt(req.params.postId,10);
     const { comment } = req.body;
 
     if (!userId) {
@@ -287,19 +287,19 @@ export const createComment = async(req,res) =>{
 
     try {
 
-        const postCheck = await pool.query(`select * from posts where post_id= $1`,[parseInt(postId, 10)]);
+        const postCheck = await pool.query(`select * from posts where post_id=$1;`,[parseInt(postId, 10)],);
         if(postCheck.rows.length === 0){
             return res.status(404).json({message: "post not found"});
         }
         //sentencia para insertar el comentario
-        // const query = ` INSERT INTO Comments (post_id, user_id, user_comment, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *`;
-        // const values = [postId, userId, comment];
-        // const { rows } = await pool.query(query, values);
+        const query = ` INSERT INTO Comments (post_id, user_id, user_comment, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *`;
+        const values = [postId, userId, comment];
+        const { rows } = await pool.query(query, values);
 
-        const commentAdd= await pool.query("insert into comments values post_id=$1 , user_id=$2 , user_comment=$3, created_at = now() returning *;",[parseInt(postId, 10),userId,comment]);
+        // const commentAdd= await pool.query("insert into comments values post_id=$1,user_id=$2,user_comment=$3,created_at= now() returning *;",[parseInt(postId, 10),userId,comment]);
 
-        if(commentAdd.rows.length === 0) {
-            return res.json({message: "something was wrong creating your comment"})
+        if(rows.length === 0) {
+            return res.json({message: "something went wrong creating your comment"})
         }
         res.status(201).json({
             success: true,
@@ -319,31 +319,40 @@ export const createComment = async(req,res) =>{
 };
 
 //traer todos los comentarios de un post
-export const getPostComments = async(req,res) => {
-    const postId = req.params;
+export const getPostComments = async (req, res) => {
+    // const postId = req.params;
+
+    const postId = parseInt(req.params.postId, 10);
+    if (isNaN(postId)) {
+    return res.status(400).json({ success: false, message: "Invalid post ID" });
+    }
 
     try {
-        
-        //consulta para obtener los comentarios asociados al post ademas del username y avatar de los usuarios que comentaron
-        const commentsResult= await pool.query("select c.comment_id ,c.user_comment , c.created_at, u.profile_picture, u.username from comments c join users u on c.user_id = u.user_id where c.post_id =$1",[postId]);
+      //consulta para obtener los comentarios asociados al post ademas del username y avatar de los usuarios que comentaron
+    const commentsResult = await pool.query(
+        "select c.comment_id ,c.user_comment , c.created_at, u.profile_picture, u.username from comments c join users u on c.user_id = u.user_id where c.post_id =$1",
+        [postId]
+    );
 
-        //si no consigue los comentarios
-        if(commentsResult.rows.length === 0) {
-            return res.status(401).json({message: 'no comments founded for this post'})
-        }
-        res.status(200).json({message: "comments founded"})
+      //si no consigue los comentarios
+    if (commentsResult.rows.length === 0) {
+        return res
+        .status(401)
+        .json({ message: "no comments founded for this post" });
+    }
 
+    res
+        .status(200)
+        .json({ message: "comments founded", comments: commentsResult.rows });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            success:false,
-            message: "something was wrong searching the post comments",
-            error: error.message,
-        })
+    console.log(error);
+    res.status(500).json({
+        success: false,
+        message: "something was wrong searching the post comments",
+        error: error.message,
+    });
     }
 };
-
-
 
 
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPost, getRecentPosts, getPostById, searchPosts, updatePost, deletePost, createComment, getPostComments,like_posts} from "../controllers/post.controllers.js";
+import { createPost, getRecentPosts, getPostById, searchPosts, updatePost, deletePost, createComment, getPostComments} from "../controllers/post.controllers.js";
 import validatePost from "../validators/createPost.validators.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 import validateComment from "../validators/comments.validator.js";
@@ -22,9 +22,9 @@ router.delete('/post/:postId',authenticateToken,deletePost);
 
 router.post("/posts/:postId/comment",authenticateToken,validateComment(),createComment);
 
-router.get('/posts/:postId/comments',authenticateToken,getPostComments);
+router.get("/posts/:postId/comments",authenticateToken,getPostComments);
 
-router.get('/users/me/liked-posts', authenticateToken, like_posts);
+// router.get('/users/me/liked-posts', authenticateToken,like_posts);
 
 
 

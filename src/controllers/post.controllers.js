@@ -154,23 +154,28 @@ export const getPostById = async (req, res) => {
 export const updatePost = async (req,res) =>{
     // parametros necesarios para la busqueda
     const userId = req.params;      //lo obtenemos del JWT
-    const postId= req.params;       //como lo obtengo???
+    const postId= parseInt(req.params.postId,10);       //como lo obtengo???
     const {rating,review,favorite,reaction_photo,tag, contains_spoilers,watch_Date,updated_At} = req.body;
     let reactionPhotoUrl;
 
+    //si  el id  no es un numero
+    if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid postId provided" });
+    }
+
     try {
         //buscamos el post existente
-        const postResult= await pool.query("select * from posts where post_id=$1 and user_id=$2",[postId,userId])
+        const { rows }= await pool.query("select * from posts where post_id=$1 and user_id=$2",[parseInt(postId, 10), userId],)
 
         //si no encuentra el post
-        if (postResult.rows.length === 0){
+        if (rows.length === 0){
             return res.status(404).json({error: "post don't found"})
         }
 
-        const post= postResult.rows[0];
+        const post= rows[0].created_at;
 
         //verificamos si la publicacion tiene menos de 24 horas de publicada
-        const createdAd = new Date(post.created_at);
+        const createdAd = new Date(post);
         const now= new Date();
 
         
@@ -186,7 +191,7 @@ export const updatePost = async (req,res) =>{
         }
 
         //actualizacion del post en la base de datos
-        const updatedPost = await pool.query( "UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, watch_date= $5, reaction_photo= $6, tag= $7, updated_at = current_timestamp WHERE post_id= $8 ",[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, updated_At,postId]);
+        const updatedPost = await pool.query( `UPDATE POSTS SET review= $1,rating= $2, favorite =$3, contains_spoilers= $4, watch_date= $5, reaction_photo= $6, tag= $7, updated_at = current_timestamp WHERE post_id= $8 RETURNING *` ,[review,rating,favorite,contains_spoilers,watch_Date,reactionPhotoUrl||reaction_photo,tag, updated_At,parseInt(postId, 10),]);
 
         //si no consigue la publicacion
         if(updatedPost.rows.length === 0){
@@ -205,7 +210,7 @@ export const updatePost = async (req,res) =>{
             error: error.message,
         });
 
-      
+
 
     }
 
@@ -231,23 +236,30 @@ export const updatePost = async (req,res) =>{
 //eliminar un post del usuario que no tenga mas de 24
 export const deletePost = async(req,res) =>{
     const userId = req.user.id;
-    const {postId}= req.params;
+    const  postId = parseInt(req.params.postId,10);
+
+    if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+    }
+    if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid postId provided" });
+    }
 
     try {
 
         //buscamos el post existente
-        const postResult= await pool.query("select * from posts where post_id=$1 and user_id=$2",[postId,userId])
+        const postResult= await pool.query("select * from posts where post_id=$1 and user_id=$2",[parseInt(postId, 10), userId],)
 
         //si no encuentra el post
         if (postResult.rows.length === 0){
-            return res.status(404).json({error: "post don't found"})
+            return res.status(404).json({error: "post not founded"})
         }
 
         const post = postResult.rows[0];
         const movieId = post.movie_id;
 
         //eliminar el post
-        const deletePost = await pool.query("delete from posts where post_id=$1 and posts.user_id=$2",[postId,userId
+        const deletedPost = await pool.query("delete from posts where post_id=$1 and posts.user_id=$2",[postId,userId
         ]);
         
         //verificar si no esta marcada como favorita

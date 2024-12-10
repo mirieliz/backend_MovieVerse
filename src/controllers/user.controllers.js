@@ -500,3 +500,61 @@ export const updateTopMovie = async (req, res) => {
       .json({ message: "Failed to update top movie.", error: error.message });
   }
 };
+
+export const getOtherUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const query = `
+            SELECT 
+                username, 
+                description, 
+                profile_picture 
+            FROM users 
+            WHERE user_id = $1;
+        `;
+
+        const { rows } = await pool.query(query, [userId]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        res.status(200).json({
+            message: "User retrieved successfully.",
+            user: rows[0],
+        });
+    } catch (error) {
+        console.error("Error retrieving user:", error);
+        res.status(500).json({ message: "Failed to retrieve user.", error: error.message });
+    }
+};
+
+export const getOtherTopMovies = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const query = `
+            SELECT 
+                movie_id, 
+                rank 
+            FROM top_movies 
+            WHERE user_id = $1
+            ORDER BY rank ASC;
+        `;
+
+        const { rows } = await pool.query(query, [userId]);
+
+        if (rows.length === 0) {
+            return res.status(200).json({ message: "No top movies found for this user." });
+        }
+
+        res.status(200).json({
+            message: "Top movies retrieved successfully.",
+            topMovies: rows,
+        });
+    } catch (error) {
+        console.error("Error retrieving top movies:", error);
+        res.status(500).json({ message: "Failed to retrieve top movies.", error: error.message });
+    }
+};

@@ -424,20 +424,39 @@ export const addLike = async (req, res) => {
 
   export const getLikes = async (req, res) => {
     try {
-      const { postId } = req.params;
-  
-      // Obtener la cantidad de likes
-      const likeCount = await pool.query(
-        `SELECT COUNT(*) AS like_count FROM public.likes WHERE post_id = $1`,
-        [postId]
-      );
-  
-      res.status(200).json({ likes: parseInt(likeCount.rows[0].like_count, 10) });
+        const { postId } = req.params;
+        const userId = req.user.id; // Asegúrate de que el middleware decodifique el token y pase el userId
+
+        // Obtener la cantidad total de likes para el post
+        const likeCountQuery = `
+            SELECT COUNT(*) AS like_count 
+            FROM public.likes 
+            WHERE post_id = $1
+        `;
+        const likeCountResult = await pool.query(likeCountQuery, [postId]);
+        const likeCount = parseInt(likeCountResult.rows[0].like_count, 10);
+
+        // Verificar si el usuario actual ya dio like
+        const userLikedQuery = `
+            SELECT EXISTS (
+                SELECT 1 
+                FROM public.likes 
+                WHERE post_id = $1 AND user_id = $2
+            ) AS user_liked
+        `;
+        const userLikedResult = await pool.query(userLikedQuery, [postId, userId]);
+        const userLiked = userLikedResult.rows[0].user_liked;
+
+        console.log('Request received for postId:', req.params.postId);
+
+        // Responder con la cantidad de likes y si el usuario dio like
+        res.status(200).json({ likes: likeCount, userLiked });
     } catch (error) {
-      console.error("Error fetching likes:", error);
-      res.status(500).json({ message: "Failed to fetch likes." });
+        console.error("Error fetching likes:", error);
+        res.status(500).json({ message: "Failed to fetch likes." });
     }
-  };
+};
+
   
 
 

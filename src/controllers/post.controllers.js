@@ -366,6 +366,80 @@ export const getPostComments = async (req, res) => {
     }
 };
 
+export const addLike = async (req, res) => {
+    try {
+      const userId = req.user.id; // Obtenido del token JWT
+      const { postId } = req.params;
+  
+      // Verificar si ya existe el like
+      const existingLike = await pool.query(
+        `SELECT * FROM public.likes WHERE user_id = $1 AND post_id = $2`,
+        [userId, postId]
+      );
+  
+      if (existingLike.rows.length > 0) {
+        return res.status(400).json({ message: "You have already liked this post." });
+      }
+  
+      // Insertar el like
+      await pool.query(
+        `INSERT INTO public.likes (user_id, post_id) VALUES ($1, $2)`,
+        [userId, postId]
+      );
+  
+      res.status(201).json({ message: "Post liked successfully." });
+    } catch (error) {
+      console.error("Error adding like:", error);
+      res.status(500).json({ message: "Failed to like the post." });
+    }
+  };
+
+  export const removeLike = async (req, res) => {
+    try {
+      const userId = req.user.id; // Obtenido del token JWT
+      const { postId } = req.params;
+  
+      // Verificar si existe el like
+      const existingLike = await pool.query(
+        `SELECT * FROM public.likes WHERE user_id = $1 AND post_id = $2`,
+        [userId, postId]
+      );
+  
+      if (existingLike.rows.length === 0) {
+        return res.status(400).json({ message: "You haven't liked this post yet." });
+      }
+  
+      // Eliminar el like
+      await pool.query(
+        `DELETE FROM public.likes WHERE user_id = $1 AND post_id = $2`,
+        [userId, postId]
+      );
+  
+      res.status(200).json({ message: "Like removed successfully." });
+    } catch (error) {
+      console.error("Error removing like:", error);
+      res.status(500).json({ message: "Failed to remove like." });
+    }
+  };
+
+  export const getLikes = async (req, res) => {
+    try {
+      const { postId } = req.params;
+  
+      // Obtener la cantidad de likes
+      const likeCount = await pool.query(
+        `SELECT COUNT(*) AS like_count FROM public.likes WHERE post_id = $1`,
+        [postId]
+      );
+  
+      res.status(200).json({ likes: parseInt(likeCount.rows[0].like_count, 10) });
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+      res.status(500).json({ message: "Failed to fetch likes." });
+    }
+  };
+  
+
 
 
 

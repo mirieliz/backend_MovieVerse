@@ -185,61 +185,54 @@ export const getFavoriteMovies = async (req, res) => {
     res.status(500).json({ error: "Error fetching favorite movies." });
   }
 };
-
-// Cambio de password
-export const changePassword = async (res, req) => {
-  const userId = req.params;
-  const data = req.body;
-
-  if (!userId) {
-    return res.status(401).json({ message: "user not authenticated" });
-  }
-  try {
-    //traemos la contraseña del usuario
-    const userResult = await pool.query(
-      "select * from users where user_id=$1",
-      [userId]
-    );
-
-    if (userResult.rows.length > 0) {
-      return res.status(401).json({ error: "user not founded" });
-    }
-
-    const user = userResult.rows[0];
-
-    //comparar la contraseña actual con la contraseña en la BD
-    const isMatch = await bcrypt.compare(
-      user.user_password,
-      data.currentPassword
-    );
-
-    if (!isMatch) {
-      return res.status(400).json({ error: "current password is incorrect" });
-    }
-
-    //comparar la nueva contraseña con la confirmacion
-    if (data.newPassword !== data.confirmPassword) {
-      return res.status(400).json({ error: "password not match" });
-    }
-
-    //hashing de la nueva constraseña
-    const hashedNewPassword = await bcrypt.hash(data.newPassword, 10);
-
-    //actualizar la contraseña en la BD
-    await pool.query("update users set user_password = $1 where user_id = $2", [
-      hashedNewPassword,
-      userId,
-    ]);
-
-    res.status(200).json({ message: "password updated successfully" });
-  } catch (error) {
-    console.error("error updating password:", error);
-    res.status(500).json({
-      message: "An error occurred while updating the password",
-      error: err.message,
-    });
-  }
-};
+  
+    // Cambio de password 
+    export const changePassword = async (req, res) => {
+      const userId = req.user.id; // Debe obtenerse del token autenticado
+      const { currentPassword, newPassword, confirmNewPassword } = req.body;
+    
+      // Verificar que todos los valores estén proporcionados
+      if (!currentPassword || !newPassword || !confirmNewPassword) {
+        return res.status(400).json({ message: 'These values are required' });
+      }
+    
+      try {
+        // Obtener la contraseña actual del usuario desde la base de datos 
+        const userResult = await pool.query('SELECT user_password FROM Users WHERE user_id = $1', [userId]);
+        
+        if (userResult.rows.length === 0) {
+          return res.status(404).json({ message: "User not found" });
+        } 
+        const user = userResult.rows[0];
+        
+        // Verificar la contraseña actual 
+        const isMatch = await bcrypt.compare(currentPassword, user.user_password);
+        
+        if (!isMatch) {
+          return res.status(401).json({ message: "Current password is incorrect" });
+        }
+    
+        // Verificar la coincidencia en la nueva contraseña
+        if (newPassword !== confirmNewPassword) {
+          return res.status(401).json({ message: "New password does not match" });
+        }
+    
+        // Hashing de la nueva contraseña 
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10); 
+    
+        // Actualizar la contraseña en la base de datos 
+        await pool.query('UPDATE Users SET user_password = $1 WHERE user_id = $2', [hashedNewPassword, userId]);
+    
+        res.status(200).json({ message: "Password updated successfully" });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ 
+          success: false,
+          message: "Something went wrong changing the password",
+          error: error.message 
+        });
+      }
+    };
 
 //
 // posts a los que el usuario dio like

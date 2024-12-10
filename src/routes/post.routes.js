@@ -26,11 +26,12 @@ router.get("/posts/:postId/comments",authenticateToken,getPostComments);
 
 // router.get('/users/me/liked-posts', authenticateToken,like_posts);
 
+router.get('/posts/:postId/like', authenticateToken, getLikes);
+
 router.post('/posts/:postId/like', authenticateToken, addLike);
 
 router.delete('/posts/:postId/like', authenticateToken, removeLike);
 
-router.get('/posts/:postId/like', authenticateToken, getLikes);
 
 
 export default router; 

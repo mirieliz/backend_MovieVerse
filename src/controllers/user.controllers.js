@@ -188,7 +188,8 @@ export const getFavoriteMovies = async (req, res) => {
     // Cambio de password 
 export const changePassword = async(res,req) => {
     
-    const userId= req.params;
+     const  userId  = req.user.id; // Obtenido del token JWT
+
     const data=req.body;
 
     if(!userId){
@@ -196,16 +197,17 @@ export const changePassword = async(res,req) => {
     }
     try {
         //traemos la contraseña del usuario
-        const userResult= await pool.query('select * from users where user_id=$1',[userId]);
+        const {rows}= await pool.query('select * from users where user_id=$1',[userId]);
+        console.log(rows);
 
-        if(userResult.rows.length > 0){
+        if(!rows.length){
             return res.status(401).json({error: "user not founded"});
         }
 
         const user= userResult.rows[0];
 
         //comparar la contraseña actual con la contraseña en la BD
-        const isMatch = await bcrypt.compare(user.user_password, data.currentPassword);
+        const isMatch = await bcrypt.compare(data.currentPassword,user.user_password ); //primero la que recibe, luego la encriptada
 
         if(!isMatch){
             return res.status(400).json({error: "current password is incorrect"});
@@ -227,7 +229,7 @@ export const changePassword = async(res,req) => {
         console.error("error updating password:",error);
         res.status(500).json({
             message:"An error occurred while updating the password", 
-            error: err.message,
+            error: error.message,
         })
     }
 

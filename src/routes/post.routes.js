@@ -22,9 +22,9 @@ router.delete('/post/:postId',authenticateToken,deletePost);
 
 router.post("/posts/:postId/comment",authenticateToken,validateComment(),createComment);
 
-router.get('/posts/:postId/comments',authenticateToken,getPostComments);
+router.get("/posts/:postId/comments",authenticateToken,getPostComments);
 
-router.get('/users/me/liked-posts', authenticateToken, like_posts);
+// router.get('/users/me/liked-posts', authenticateToken,like_posts);
 
 
 

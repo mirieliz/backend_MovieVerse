@@ -457,6 +457,52 @@ export const addLike = async (req, res) => {
     }
 };
 
+// Endpoint para listar todos los posts relacionados con una película específica
+export const getPostsByMovieId = async (req, res) => {
+    const { movieId } = req.params;
+
+    if (!movieId || isNaN(parseInt(movieId, 10))) {
+        return res.status(400).json({ message: "Invalid movieId provided" });
+    }
+
+    try {
+        const query = `
+            SELECT 
+                Posts.post_id AS post_id,
+                Posts.movie_id,
+                Posts.review,
+                Posts.rating,
+                Users.username,
+                Users.profile_picture,
+                Posts.created_at
+            FROM Posts
+            INNER JOIN Users ON Posts.user_id = Users.user_id
+            WHERE Posts.movie_id = $1
+            ORDER BY Posts.created_at DESC;
+        `;
+
+        const values = [parseInt(movieId, 10)];
+        const { rows } = await pool.query(query, values);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: "No posts found for this movie" });
+        }
+
+        res.status(200).json({
+            success: true,
+            posts: rows,
+        });
+    } catch (error) {
+        console.error("Error fetching posts by movie ID:", error);
+        res.status(500).json({
+            success: false,
+            message: "An error occurred while fetching posts",
+            error: error.message,
+        });
+    }
+};
+
+
   
 
 

@@ -1,7 +1,7 @@
 import { pool } from "../database/connection.database.js";
 import { uploadImage } from "../helpers/cloudinary.helpers.js";
 import fs from 'fs-extra';
-
+import bcrypt from 'bcryptjs';
 export const addFavorite = async (req, res) => {
     try {
         const userId = req.user.id; // Obtenido del token JWT
@@ -175,49 +175,70 @@ export const getFavoriteMovies = async (req, res) => {
     // Cambio de password 
 export const changePassword = async(res,req) => {
     
-    const userId = req.params;
-
-    // const {currentPassword, newPassword, confirmNewPassword} = req.body;
-    const data = req.body;
-
-    //si no se proporcionan los valores
-    if( !currentPassword || !newPassword || !confirmNewPassword){
-        return res.json({message: 'this values are required'})
-    }
+    const userId= req.params;
+    const data=req.body;
 
     if(!userId){
-        return res.status(401).json({ message: "User not authenticated" });
+        return res.status(401).json({message: "user not authenticated"});
+    }
+    try {
+        //traemos la contraseña del usuario
+        const userResult= await pool.query('select * from users where user_id=$1',[userId]);
+
+        if(userResult.rows.length > 0){
+            return res.status(401).json({error: "user not founded"});
+        }
+
+        const user= userResult.rows[0];
+
+        //comparar la contraseña actual con la contraseña en la BD
+        const isMatch = await bcrypt.compare(user.user_password, data.currentPassword);
+
+        if(!isMatch){
+            return res.status(400).json({error: "current password is incorrect"});
+        }
+
+        //comparar la nueva contraseña con la confirmacion
+        if(data.newPassword !== data.confirmPassword){
+            return res.status(400).json({error: "password not match"})
+        }
+
+        //hashing de la nueva constraseña
+        const hashedNewPassword = await bcrypt.hash(data.newPassword,10);
+
+        //actualizar la contraseña en la BD
+        await pool.query("update users set user_password = $1 where user_id = $2",[hashedNewPassword,userId]);
+        
+        res.status(200).json({message: "password updated successfully"})
+    } catch (error) {
+        console.error("error updating password:",error);
+        res.status(500).json({
+            message:"An error occurred while updating the password", 
+            error: err.message,
+        })
     }
 
+};
+
+//
+// posts a los que el usuario dio like 
+export const likedPosts = async (req, res) => {
+    const userId = req.user.id;
     try {
-        // Obtener la contraseña actual del usuario desde la base de datos 
-        const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
-        
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ message: "User not found" });
-        } const user = userResult.rows[0];
-        
-        // Verificar la contraseña actual 
-        const isMatch = await bcrypt.compare(data.currentPassword, user.password);
-        
-        if (!isMatch) {
-            return res.status(401).json({ message: "Current password is incorrect" });
-        }
-
-        //verificar la coincidencia en la nueva contraseña
-        if(data.newPassword !== data.confirmNewPassword) {
-            return res.status(401).json({message: "New password not match"});
-        }
-
-         // Hashing de la nueva contraseña 
-        const hashedNewPassword = await bcrypt.hash(data.newPassword, 10); 
-         // Actualizar la contraseña en la base de datos 
-        await pool.query('UPDATE users SET user_password = $1 WHERE id = $2', [hashedNewPassword, userId]);
-        res.status(200).json({ message: "Password updated successfully" });
+        //consulta para traer los post a los que el usuario dio like
+    const query = ` SELECT posts.post_id, posts.movie_id, posts.review, posts.rating, posts.contains_spoilers, posts.watch_date, posts.reaction_photo,  posts.created_at, users.user_id, users.username, users.profile_picture FROM Likes INNER JOIN posts ON Likes.post_id = posts.post_id INNER JOIN Users ON posts.user_id = Users.user_id WHERE Likes.user_id = $1 ORDER BY Post.updated_at DESC; `;
+    const values = [userId];
+    const { rows } = await pool.query(query, values);
+    if (rows.length === 0) {
+        return res.status(404).json({ success: false, message: "No liked posts found" });
+    }
+    res.status(200).json({ success: true, posts: rows });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({message: "something was wrong changing the password"
-
-        })
+    console.error("Error fetching liked posts:", error);
+    res.status(500).json({
+        success: false,
+        message: "An error occurred while retrieving the liked posts",
+        error: error.message,
+        });
     }
 };

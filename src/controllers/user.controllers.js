@@ -370,7 +370,7 @@ export const updateUser = async (req, res) => {
 export const createTopMovies = async (req, res) => {
     try {
         const { topMovies } = req.body; // Array de movie_ids
-        const userId = req.user?.id; // Middleware JWT debería añadir user.id
+        const userId = req.user?.id; // Middleware JWT debería añadir `user.id`
 
         if (!userId) {
             return res.status(400).json({ message: "User ID is missing." });
@@ -396,7 +396,7 @@ export const createTopMovies = async (req, res) => {
         // Construcción segura de la consulta SQL
         const values = topMovies.map((movieId, index) => {
             if (!movieId) throw new Error("Invalid movie ID in topMovies array");
-            return (${userId}, '${movieId}', ${index + 1});
+            return `(${userId}, '${movieId}', ${index + 1})`;
         }).join(", ");
 
         const query = `

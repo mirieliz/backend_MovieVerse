@@ -184,7 +184,7 @@ export const getFavoriteMovies = async (req, res) => {
     res.status(500).json({ error: "Error fetching favorite movies." });
   }
 };
-//   
+  
     // Cambio de password 
 export const changePassword = async(res,req) => {
     
@@ -267,8 +267,7 @@ export const getUser = async (req, res) => {
                 user_id, 
                 username, 
                 description, 
-                profile_picture, 
-                top_movies 
+                profile_picture 
             FROM users 
             WHERE user_id = $1;
         `;
@@ -292,23 +291,9 @@ export const getUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
     try {
-        const { username, description, top_movies } = req.body;
+        const { username, description } = req.body;
         let profilePictureUrl = null;
         const userId = req.user.id; // Suponiendo que el middleware del JWT añade user_id
-
-        // Validación del campo top_movies
-        let topMoviesArray = null;
-        if (top_movies) {
-            topMoviesArray = Array.isArray(top_movies)
-                ? top_movies
-                : top_movies.split(","); // Soporte para string delimitado por comas
-
-            if (topMoviesArray.length > 3) {
-                return res.status(400).json({
-                    message: "You can only select up to three favorite movies.",
-                });
-            }
-        }
 
         // Validación de username único
         if (username) {
@@ -335,9 +320,8 @@ export const updateUser = async (req, res) => {
                 username = COALESCE($1, username),
                 description = COALESCE($2, description),
                 profile_picture = COALESCE($3, profile_picture),
-                top_movies = COALESCE($4, top_movies),
                 updated_at = NOW()
-            WHERE user_id = $5
+            WHERE user_id = $4
             RETURNING *;
         `;
 
@@ -345,7 +329,6 @@ export const updateUser = async (req, res) => {
             username || null,
             description || null,
             profilePictureUrl || null,
-            topMoviesArray || null,
             userId,
         ];
 
@@ -473,4 +456,5 @@ export const updateTopMovie = async (req, res) => {
         console.error("Error updating top movie:", error);
         res.status(500).json({ message: "Failed to update top movie.", error: error.message });
     }
+
 };

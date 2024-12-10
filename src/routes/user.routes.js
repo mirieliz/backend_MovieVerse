@@ -17,10 +17,6 @@ router.delete('/users/me/favorites/:movie_id', authenticateToken, removeFavorite
 //this endpoint had validations
 router.get('/users/me/posts', getUserPostMyPosts );
 
-router.get('/users/:userId/posts', authenticateToken ,getOtherUserPost);
-
-router.get('/users/:userId', authenticateToken, getOtherUser)
-
 router.get('/users/me/favorite-movies', authenticateToken, getFavoriteMovies);
 
 router.get('/users/me', authenticateToken, getUser);
@@ -34,6 +30,10 @@ router.get('/topMovies', authenticateToken, getTopMovies);
 router.put('/topMovies', authenticateToken, updateTopMovie);
 
 router.get('/users/:userId/top-movies', authenticateToken, getOtherTopMovies)
+
+router.get('/users/:userId', authenticateToken, getOtherUser)
+
+router.get('/users/:userId/posts', authenticateToken ,getOtherUserPost);
 
 //Cambio de contraseña
 router.put('/users/me/password', authenticateToken, validatePassword(), changePassword);

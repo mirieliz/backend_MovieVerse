@@ -1,6 +1,7 @@
 import { pool } from "../database/connection.database.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import blacklist from "../database/blacklist.database.js";
 
 export const login= async (req,res)=>{
     
@@ -81,3 +82,15 @@ export const register= async (req,res)=>{
     
     // res.send('register')
 } 
+// logout (remover/invalidar el JWT)
+export const logOut = async (req,res) => {
+
+    // res.clearCookie('access_token').json({message: 'logout successful'});
+    const token = req.token; //obtener el token actual
+
+    blacklist.add(token);
+    // res.clearCookie(token); //borrar el JWT
+
+    res.status(200).json({message:'Logout successful. Token has been invalidated.'});
+    
+}

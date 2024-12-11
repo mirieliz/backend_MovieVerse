@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, logOut, register } from "../controllers/auth.controllers.js";
+import { login, logOut, recoverPassword, register } from "../controllers/auth.controllers.js";
 import validateUserLogin from "../validators/login.validators.js";
 import validateUserRegister from "../validators/register.validators.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
@@ -20,5 +20,7 @@ router.get('/protected', authenticateToken, (req, res) => {
 });
 
 router.post('/logout',authenticateToken ,logOut );
+
+router.post('/recover-password',recoverPassword);
 
 export default router;

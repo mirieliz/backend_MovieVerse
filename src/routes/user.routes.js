@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { addFavorite, removeFavorite, searchUsers, getUserPostMyPosts ,getOtherUserPost, getFavoriteMovies, changePassword, getUser, 
-    updateUser, createTopMovies, updateTopMovie, getTopMovies, likedPosts, getOtherUser, getOtherTopMovies} from "../controllers/user.controllers.js";
+    updateUser, createTopMovies, updateTopMovie, getTopMovies, likedPosts, getOtherUser, getOtherTopMovies,
+    userPasswordRecovery} from "../controllers/user.controllers.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
 import validatePost from "../validators/createPost.validators.js";
 import validatePassword from "../validators/password.validator.js";
@@ -45,6 +46,9 @@ router.put(
   validatePassword(),
   changePassword
 );
+
+//recuperacion de contraseña para el usuario
+router.post('/users/passwordRecovery', userPasswordRecovery);
 
 router.get('user/me/liked-post', authenticateToken, likedPosts);
 export default router;

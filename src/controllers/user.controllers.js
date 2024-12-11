@@ -2,6 +2,8 @@ import { pool } from "../database/connection.database.js";
 import { uploadImage } from "../helpers/cloudinary.helpers.js";
 import fs from "fs-extra";
 import bcrypt from "bcryptjs";
+import emailHelper from "../helpers/email.helpers.js";
+
 export const addFavorite = async (req, res) => {
   try {
     const userId = req.user.id; // Obtenido del token JWT
@@ -551,4 +553,18 @@ export const getOtherTopMovies = async (req, res) => {
         console.error("Error retrieving top movies:", error);
         res.status(500).json({ message: "Failed to retrieve top movies.", error: error.message });
     }
+};
+
+
+//recuperar la contraseña via email
+export const userPasswordRecovery = async (req,res) => {
+  
+  const { to, subject, text} = req.body;
+
+  try {
+    let info = await emailHelper(to, subject, text);
+    res.status(200).send(`Email sent: ${info.response}`);
+  } catch (error) {
+    res.status(500).send("Error sending email");
+  }
 };

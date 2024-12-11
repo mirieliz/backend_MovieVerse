@@ -2,6 +2,8 @@ import { pool } from "../database/connection.database.js";
 import { uploadImage } from "../helpers/cloudinary.helpers.js";
 import fs from "fs-extra";
 import bcrypt from "bcryptjs";
+import emailHelper from "../helpers/email.helpers.js";
+
 export const addFavorite = async (req, res) => {
   try {
     const userId = req.user.id; // Obtenido del token JWT
@@ -119,12 +121,13 @@ export const getUserPostMyPosts = async (req, res) => {
 
 //PROBAR
 export const getOtherUserPost = async (req, res) => {
-  const { userId } = req.params;
+const { userId } = req.params; //id de otro usuario
+
 
   try {
     const searchUser = await pool.query(
       "select * from users where user_id =$1",
-      [userId]
+      [userId],
     );
 
     //verificamos que el usuario exista
@@ -135,7 +138,7 @@ export const getOtherUserPost = async (req, res) => {
     //obtener los post del usuario
     const postsResult = await pool.query(
       "select posts.review, posts.rating, posts.tag, posts.favorite from posts where posts.user_id =$1",
-      [userId]
+      [userId],
     );
 
     //si no encuentra las publicaciones
@@ -550,4 +553,17 @@ export const getOtherTopMovies = async (req, res) => {
         console.error("Error retrieving top movies:", error);
         res.status(500).json({ message: "Failed to retrieve top movies.", error: error.message });
     }
+};
+
+
+//recuperar la contraseña via email
+export const userPasswordRecovery = async (req,res) => {
+  const { to, subject, text} = req.body;
+
+  try {
+    let info = await emailHelper(to, subject, text);
+    res.status(200).send(`Email sent: ${info.response}`);
+  } catch (error) {
+    res.status(500).send("Error sending email");
+  }
 };

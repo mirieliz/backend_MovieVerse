@@ -119,16 +119,13 @@ export const getUserPostMyPosts = async (req, res) => {
 
 //PROBAR
 export const getOtherUserPost = async (req, res) => {
-const otherUser = parseInt(req.params.otherUser,10);
+const { userId } = req.params; //id de otro usuario
 
-if (isNaN(otherUser)) {
-  return res.status(400).json({ message: "Invalid userId provided" });
-}
 
   try {
     const searchUser = await pool.query(
       "select * from users where user_id =$1",
-      [parseInt(otherUser, 10)],
+      [userId],
     );
 
     //verificamos que el usuario exista
@@ -139,7 +136,7 @@ if (isNaN(otherUser)) {
     //obtener los post del usuario
     const postsResult = await pool.query(
       "select posts.review, posts.rating, posts.tag, posts.favorite from posts where posts.user_id =$1",
-      [parseInt(otherUser, 10)],
+      [userId],
     );
 
     //si no encuentra las publicaciones

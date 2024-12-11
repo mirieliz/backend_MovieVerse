@@ -23,6 +23,11 @@ export const login= async (req,res)=>{
             return res.json({mensaje: "invalid credential "})
         }
 
+        const user = rows[0];
+        console.log(`id: ${user.user_id}`);
+        console.log(`Username: ${user.username}`);
+        console.log(`Email: ${user.email}`);
+
         //traemos el username del usuario
         const token = jwt.sign(
             { id: rows[0].user_id, username: rows[0].username, email: rows[0].email },
@@ -38,46 +43,58 @@ export const login= async (req,res)=>{
     // res.send('login')
 }
 
-export const register= async (req,res)=>{ 
+export const register = async (req, res) => { 
     const data = req.body ;
     try {
-
-        //llamalo rows porque sino va a petar
-        const { rows } = await pool.query( "select * from Users where email = $1",[data.email])     //hacer la validación al igual que el login
-        //si el correo existe en la BD retorna el mensaje de que el email ya esta registrado
-        if( rows.length !==0){
-            return res.json({mensaje: "This email is already registered"})
+        const { rows } = await pool.query( 
+            "select * from Users where email = $1",
+            [data.email]
+        );
+        
+        if (rows.length !== 0) {
+            return res.json({ mensaje: "This email is already registered" });
         }
 
-        //definimos una constante para verificar la existencia unica de un username
-        const checkUsername = await pool.query( "select * from Users where username = $1",[data.username]) 
-        //si el username existe en la BD retornar mensaje de que el nombre de usuario ya existe 
-        if(checkUsername.rows.length > 0){
-            return res.json({mensaje: "This username already exists"})
+        const checkUsername = await pool.query(
+            "select * from Users where username = $1",
+            [data.username]
+        );
+        
+        if (checkUsername.rows.length > 0) {
+            return res.json({ mensaje: "This username already exists" });
         }
 
-        //validacion de clave de usuario
-        if (data.password !== data.confPassword){
-            return res.json({mensaje: ' passwords do not match'})
+        if (data.password !== data.confPassword) {
+            return res.json({ mensaje: 'Passwords do not match' });
         }
-        //cifrado de clave
-        const passwordHash = await bcrypt.hash(data.password,10)  //numero hace referencia al numero de veces que se ejecuta la ejecucion de encriptado
+
+        const passwordHash = await bcrypt.hash(data.password, 10);
+
         const { rows: newUser } = await pool.query(
             "INSERT INTO Users (username, email, user_password) VALUES ($1, $2, $3) RETURNING user_id",
             [data.username, data.email, passwordHash]
         );
+
         const idUser = newUser[0].user_id;
-        
+
+        console.log(`Username: ${data.username}`);
+        console.log(`Email: ${data.email}`);
+        console.log(`User ID: ${idUser}`);
+
         const token = jwt.sign(
-            { user_id: idUser, username: data.username, email: data.email },
+            { id: idUser, username: data.username, email: data.email },
             process.env.SECRET_TOKEN_KEY,
             { expiresIn: '1d' }
         );
-        return res.status(201).json({ success: true, message: 'User registered successfully', token });
+
+        return res.status(201).json({ 
+            success: true, 
+            message: 'User registered successfully', 
+            token, 
+            user_id: idUser // Incluimos el user_id en la respuesta
+        });
 
     } catch (error) {
-        console.log(error)
+        console.log(error);
     }
-    
-    // res.send('register')
-} 
+};

@@ -5,8 +5,11 @@ const emailHelper = async (to, subject, text) => {
 let transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.NODEMAILER_USER,
-        pass: process.env.NODEMAILER_PASS,
+
+        user: "1001.25293425.ucla@gmail.com",
+        pass: "aylr zcmr baul bxpy",
+        // user: process.env.NODEMAILER_USER,
+        // pass: process.env.NODEMAILER_PASS,
     },
 });
 

@@ -2,6 +2,7 @@ import { pool } from "../database/connection.database.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import blacklist from "../database/blacklist.database.js";
+import transporter from "../helpers/emailpassword.helpers.js";
 
 export const login= async (req,res)=>{
     
@@ -116,3 +117,40 @@ export const logOut = async (req,res) => {
     
 }
 
+export const recoverPassword = async(req,res) => {
+    // Importar el transporte de nodemailer 
+        const { email } = req.body; // Verificar si el usuario existe 
+        const userResult = await pool.query('SELECT user_id FROM users WHERE email = $1', [email]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Email no registrado' }); 
+            } 
+
+        const userId = userResult.rows[0].user_id; // Generar un token de recuperación
+
+
+        // Generar un token de recuperación 
+        const token = await bcrypt.hash(userId.toString() + Date.now(), 10);
+        const expiration = Date.now() + 3600000; // 1 hora de expiración
+
+        // const token = crypto.randomBytes(20).toString('hex'); 
+
+        // const expiration = Date.now() + 3600000; // 1 hora de expiración 
+
+        // Almacenar el token en la base de datos 
+        // await pool.query('UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE user_id = $3', [token, expiration, userId]);
+        // Crear el correo electrónico 
+        const mailOptions = { 
+            from: "1001.25293425.ucla@gmail.com", 
+            to: email, subject: 'Recuperación de Contraseña', 
+            text: `Has solicitado una recuperación de contraseña. Haz clic en el siguiente enlace para restablecer tu contraseña: \n\nhttp://${req.headers.host}/reset/${token} \n\nSi no solicitaste esto, ignora este correo.` 
+        }; 
+            // Enviar el correo electrónico 
+            transporter.sendMail(mailOptions, (err, response) => { 
+                if (err) { 
+                    console.error('Error al enviar el correo:', err);
+                    return res.status(500).json({ message: 'Error al enviar el correo de recuperación' }); 
+                } 
+                res.status(200).json({ message: 'Correo de recuperación enviado'});
+            });
+        };

@@ -50,5 +50,5 @@ router.put(
 //recuperacion de contraseña para el usuario
 router.post('/users/passwordRecovery', userPasswordRecovery);
 
-router.get('user/me/liked-post', authenticateToken, likedPosts);
+router.get('/user/me/liked-post', authenticateToken, likedPosts);
 export default router;

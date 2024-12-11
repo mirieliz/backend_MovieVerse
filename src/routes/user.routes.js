@@ -36,6 +36,8 @@ router.delete(
 //this endpoint had validations
 router.get("/users/me/posts", authenticateToken, getUserPostMyPosts);
 
+router.get('/users/me/favorite-movies', authenticateToken, getFavoriteMovies);
+
 router.get("/users/:userId/posts", authenticateToken, getOtherUserPost);
 
 router.get("/users/me", authenticateToken, getUser);
@@ -49,6 +51,10 @@ router.get("/topMovies", authenticateToken, getTopMovies);
 router.put("/topMovies", authenticateToken, updateTopMovie);
 
 router.put("/topMovies", authenticateToken, updateTopMovie);
+
+router.get('/users/:userId/top-movies', authenticateToken, getOtherTopMovies)
+
+router.get('/users/:userId', authenticateToken, getOtherUser)
 
 //Cambio de contraseña
 router.put(

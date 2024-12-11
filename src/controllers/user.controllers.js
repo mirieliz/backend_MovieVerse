@@ -558,7 +558,6 @@ export const getOtherTopMovies = async (req, res) => {
 
 //recuperar la contraseña via email
 export const userPasswordRecovery = async (req,res) => {
-  
   const { to, subject, text} = req.body;
 
   try {
